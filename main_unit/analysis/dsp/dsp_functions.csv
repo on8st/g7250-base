@@ -17,11 +17,11 @@ address,role,conf
 08025378,FIR f32,HIGH
 08024fc8,FIR decimator,MEDIUM
 080257a4,FIR interpolator,MEDIUM
-08031f7c,DC blocker,HIGH
+08031f7c,DC blocker (pole 0.999512),HIGH
 08032e08,IF gain + overload,MEDIUM
 08032f80,S-meter level,MEDIUM
-0803b100,noise blanker,MEDIUM
-08035c50,auto-notch (adaptive),HYPOTHESIS
+0803b100,noise blanker (audio; mean-|x| x level; 119-sample hold),HIGH
+08035c50,auto-notch (NLMS 32 taps; mu 0.0005; 64-sample delay),HIGH
 08032d54,squelch,MEDIUM
 080330c8,FM discriminator and squelch,VERIFIED
 080318d0,AGC (look-ahead peak),VERIFIED
@@ -64,3 +64,19 @@ address,role,conf
 08024dac,cos f32 (CMSIS),HIGH
 08079674,TX delay FIR table 201 taps,VERIFIED
 08079998,TX Hilbert FIR table 201 taps,VERIFIED
+08035c18,auto-notch init,HIGH
+08025e38,NLMS filter f32 (CMSIS lms_norm shape),VERIFIED
+08026044,NLMS init,HIGH
+08026154,vector max f32,VERIFIED
+080261f4,vector min with index f32,HIGH
+080579d8,asinf (libm wrapper),VERIFIED
+08059788,asinf kernel,HIGH
+08024818,vector subtract f32,HIGH
+080246e0,vector multiply f32,HIGH
+0803b01c,vector copy f32,HIGH
+080376c0,CW audio tap (768-sample ring),HIGH
+08037728,Main CW decoder feed (+0x141; modes 4/11),HIGH
+08037054,Main-side CW decoder,MEDIUM
+0803fd40,speex_preprocess_state_init,HIGH
+0803f954,Speex band-count index table,HIGH
+0804fdd2,wfview CI-V 0x1A handler (AGC remap),HIGH

@@ -172,10 +172,11 @@ Roadmap mirrors `REVERSE_ENGINEERING_GUIDE.md`, tracked per unit.
 - [~] Phase 6 RX DSP pipeline: structure mapped (main_unit/docs/dsp.md).
 - [~] Phase 7 TX DSP pipeline: audio chain documented (dsp.md). Open: L-D Q-branch filtering;
       absolute sideband sense vs the FPGA I/Q convention; settings 0x0B7; reader of 0x24005E60.
-- [~] DSP: AGC, NR engine (SpeexDSP) and FM discriminator documented
-      (dsp.md); interrupt rate MEDIUM (48 kHz). Open: AGC code-to-label
-      mapping (on-air check), DNR2 and DNR-type path, Speex vendor
-      controls 0x30–0x36, FM stereo flag +0x11D, TX ALC loop.
+- [~] DSP: AGC (labels resolved), NR (DNR type, DNR2, Speex controls), NB, auto-notch,
+      CW/AM/SAM, FM stereo flag and the IQ estimate documented (dsp.md); interrupt rate
+      MEDIUM (48 kHz). Open: which sideband SAM keeps (on-air check); where the manual-notch
+      biquad is designed; the Main-side CW decoder FUN_08037054; whether Control can select
+      CWR; IF gain and S-meter internals; TX ALC loop.
 - [x] X6100 tooling leftovers: verify_tx_biquads.py and generate_analysis_markdown.py
       removed; evidence manifest and lib matcher ported; tools/filter_response.py added.
 - [x] run_headless_*.sh wrappers accept absolute output paths (decompile wrapper pending).

@@ -49,7 +49,7 @@ cmd,sub,direction,behaviour,trx_target,confidence
 0x19,00,read,reply 19 00 A0,-,VERIFIED
 0x1a,01,read/set,band stacking register (12 bands),shadow BSR table,HIGH
 0x1a,03,read/set,IF filter width index 0-49,shadow filter table,HIGH
-0x1a,04,read/set,AGC (1 FAST/2 MID/3 SLOW),active VFO +0x20/+0x23,HIGH
+0x1a,04,read/set,AGC (wire 1 FAST->+0x23=3; 3 SLOW->2; 2 MID->1; +0x20 = wire!=0),active VFO +0x20/+0x23,HIGH
 0x1a,05,read/set,only 0066 and 0067 (DATA mod input; stored),shadow,MEDIUM
 0x1a,06,read/set,data mode + filter,active VFO +0x18,HIGH
 0x1b,00-02,read/set,tone/TSQL/DTCS codes (stored only),shadow,MEDIUM

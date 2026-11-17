@@ -29,7 +29,7 @@ to the SLIP `0x01` block (`docs/protocol.md`).
 | 0x137 | straight-key flag (Main ignores it) | bool |
 | 0x138 | iambic type: 0 = A, 1 = B | u8 |
 | 0x139 | paddle reverse | bool |
-| 0x140 / 0x141 | decoder threshold / enable (Control only) | u8 / bool |
+| 0x140 / 0x141 | decoder threshold / enable; Main also reads them for a Main-side decoder (`FUN_08037728` feed, `FUN_08037054`; HIGH, not analysed) | u8 / bool |
 | 0x159 | CW trainer | bool |
 | 0x15A | sidetone level | 0–63 scale |
 

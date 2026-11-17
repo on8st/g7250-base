@@ -36,8 +36,11 @@ HYPOTHESIS. Function list: `analysis/dsp/dsp_functions.csv`.
 
 1. **Input.** The FPGA I/Q block is copied into working buffers; the
    codec input is kept for a line-monitor mix.
-2. **IQ balance (HYPOTHESIS).** A running correlation between I and Q
-   looks like an I/Q phase-imbalance estimate.
+2. **IQ phase-skew estimate (HIGH; not applied).** Every block the code
+   averages Q·sign(I) and |Q| (one-pole, α = 0.003 per block, about
+   1.3 s) and stores asin of their ratio, the I/Q phase skew in radians,
+   at TRX+0x210 (`0x24013E1C`). Nothing reads it and no I/Q correction
+   is applied; the stage is a dormant meter.
 3. **LAN IQ tap.** The block is converted to int16 for the HDSDR
    service (`network.md`).
 4. **IF gain and S-meter (MEDIUM).** IF gain with overload detection,
@@ -46,36 +49,83 @@ HYPOTHESIS. Function list: `analysis/dsp/dsp_functions.csv`.
    - **SSB/data/RTTY:** the phasing method, using a **201-tap Hilbert
      FIR** on one branch and a 201-tap matched delay FIR on the other,
      subtracted for LSB and added for USB (VERIFIED).
-   - **CW:** complex band-pass and a pitch shift (MEDIUM).
-   - **AM:** envelope with a DC blocker (MEDIUM).
-   - **SAM:** a carrier-tracking loop (MEDIUM).
+   - **CW (HIGH):** a complex low-pass on I/Q at half the CW bandwidth,
+     then a mix by the CW pitch (settings `0x128`; NCO increment
+     pitch/48 000 per sample, CMSIS sin/cos `FUN_08024e4c`/`FUN_08024dac`),
+     keeping one real component, so a carrier at 0 Hz baseband is heard
+     at the pitch. Then the optional CW peak filter (`0x136`), notch, NB,
+     S-meter, squelch, a 768-sample tap for the Main-side CW decoder, NR
+     and AGC.
+   - **CWR, LBK (HIGH):** no RX case. They fall through to the S-meter
+     only and output raw I/Q on L/R, like IQ mode.
+   - **AM (HIGH):** complex low-pass on I/Q, envelope = ½·√(I²+Q²), NB,
+     then a one-pole DC blocker (pole 0.999512, about 3.7 Hz) and an
+     audio low-pass.
+   - **SAM (HIGH):** a second-order PLL on the de-rotated signal (atan2
+     phase detector, ωn = 300 rad/s, ζ = 0.70 at 48 kHz, pull-in
+     ±300 Hz; the gains fit exactly only at 48 kHz, which independently
+     supports the 48 kHz audio rate).
+     - Four 7-section allpass chains (a polyphase IIR Hilbert pair) on
+       cos·I, sin·I, cos·Q and sin·Q give both sidebands, each with a
+       fade leveller (20 ms average removed, 1.4 s carrier average
+       added).
+     - After AGC the first sideband is copied to both channels, so SAM
+       outputs a single sideband (MEDIUM; which one is a HYPOTHESIS for
+       an on-air check).
+     - A smoothed carrier offset in Hz is kept at `0x2400A2F0` (no
+       reader found).
    - **FM (VERIFIED):** a conjugate-product discriminator (`FUN_080330c8`):
      atan2 of the current sample times the conjugate of the previous
      one (CMSIS atan2 `FUN_08024aa8`), scaled by 1/(1000π). Squelch uses
      the VFO +0x1D threshold with 20 ms hysteresis and a soft-mute ramp.
      In WFM, with settings +0x11D set, an optional stereo stage (pilot
-     phase via atan2, doubled) splits L/R (MEDIUM).
+     phase via atan2, doubled) splits L/R (MEDIUM). The stereo flag
+     +0x11D is never written by code; it comes only from the stored
+     settings image, so stereo cannot be switched in V1.0.1 (HIGH).
 6. **Optional stages:**
-   - noise blanker (MEDIUM);
-   - adaptive auto-notch (HYPOTHESIS);
+   - **Noise blanker** (`FUN_0803b100`, HIGH): switch `0x11B`, level
+     `0x0F7` (1–20 on Control), on demodulated audio. A sample is an
+     impulse when it exceeds level × the running mean |x| (about 4 ms).
+     Each impulse reloads a 119-sample (about 2.5 ms) hold, during which
+     the last good sample is output with a gain falling ×0.9 per sample;
+     afterwards the gain recovers ×1.1 per sample up to 1. The read
+     pointer of its 240-sample ring stops during blanking, so the audio
+     delay shifts after each event (MEDIUM). Not used in data modes or
+     SAM.
+   - **Auto-notch** (`FUN_08035c50`, HIGH): VFO +0x1F, unless the manual
+     notch +0x1E is on. A normalised LMS (CMSIS shape, `FUN_08025e38`)
+     with 32 taps and μ = 0.0005 on 64-sample sub-blocks; the reference
+     is the input delayed by 64 samples (1.33 ms) and the error (the
+     tone-free audio) is the output. If any coefficient exceeds 1.0, the
+     filter is reset and bypassed for 500 sub-blocks (about 0.67 s).
    - squelch;
    - AGC (`FUN_080318d0`, VERIFIED; see below).
 7. **Noise reduction (HIGH).** The SpeexDSP preprocessor (float build),
    frame 256 at 16 kHz, with denoise on and the Speex AGC and VAD off
    (init `FUN_0803b228`, run `FUN_08040238`, control `FUN_08040cd8`).
-   - It has four vendor control extensions (0x30–0x36: band count and
-     three tuning floats).
+   - **Vendor controls (HIGH).** `0x30` sets the band count through an
+     index table {3, 8, 16, 24, 32, 64, 128} (the G7250 uses index 3 =
+     24 bands, the stock value). `0x32` sets the a-priori-SNR smoothing
+     (stock 0.7; G7250 0.75). `0x34` sets the floor of the noise-estimate
+     update rate (stock 0.03; G7250 0.024). `0x36` sets the minimum
+     decision-directed weight (stock 0.1; unchanged). Odd codes read
+     back.
    - The wrapper `FUN_0803b4c4` collects 768 samples at 48 kHz,
      decimates by 3 to 256, runs Speex, then interpolates back by 3
      (about 16 ms latency) (HIGH).
-   - The DNR1 level 1–100 (settings 0x0F2) maps to −1…−25 dB
-     suppression. DNR2 and the DNR-type path are open.
+   - **NR selection (HIGH).** VFO +0x1C is only an on/off switch
+     (Control toggles 0/1); any non-zero value runs Speex, except in WFM.
+     The DNR1 level 1–100 (`0x0F2`) maps to −1…−25 dB. DNR2 (`0x0F3`) is
+     copied by Main but never used: it has no effect in V1.0.1.
 8. **RX equaliser.** Five-band biquad EQ, designed at runtime.
 9. **Output.**
    - the wfview RX audio tap;
    - AF volume;
    - the line-monitor mix and beeps;
    - an MDMA copy into the I²S3 TX buffer.
+
+**Dead flags (HIGH).** main() clears +0x118 (RX output scaled by 0, a
+mute) and +0x11E (AGC bypass), and no code sets them.
 
 ### AGC (`FUN_080318d0`, VERIFIED)
 
@@ -103,8 +153,12 @@ Decay time constants by VFO byte +0x23 and mode:
 | 2 | 1.4 s | 0.28 s | 1.6 s | 30 ms |
 | 3 | 80 ms + 40 ms hang | 30 ms | 0.7 s | 30 ms |
 
-CI-V labels codes 1/2/3 FAST/MID/SLOW, but code 3 has the fastest
-decay. Which side is mislabelled is a HYPOTHESIS to check on air.
+**Labels (VERIFIED).** Control shows +0x23 as 0 OFF, 1 AUTO, 2 SLOW,
+3 FAST, which matches the decay table. The wfview CI-V `1A 04` handler
+(`FUN_0804fdd2`) remaps the wire codes: 1 FAST → 3, 3 SLOW → 2, 2 MID
+→ 1, and sets +0x20 for any non-zero code. So "AUTO" on the panel is
+the medium setting, and no label is wrong. Correction: an earlier
+version compared CI-V wire codes directly with VFO codes.
 
 ## TX chain (`FUN_08034b88`)
 

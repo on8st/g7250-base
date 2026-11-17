@@ -65,8 +65,8 @@ offset,width,type,field,control_source,main_consumer,confidence
 0x138,1,u8,iambic type 0 = A 1 = B,ui+0x995,FUN_080362c0,HIGH
 0x139,1,u8,paddle reverse (swap PH3/PH4),ui+0x9A8,FUN_08023ab4,VERIFIED
 0x13b,1,u8,CW zoom,ui+0x9B2,FUN_08041ef4,VERIFIED
-0x140,1,u8,CW decoder threshold (Control only),ui+0x9A6,C:FUN_08051bc8,HIGH
-0x141,1,u8,CW decoder enable (Control only),ui+0x9A5,C:FUN_08051bc8,HIGH
+0x140,1,u8,CW decoder threshold (also read by the Main-side decoder FUN_08037054),ui+0x9A6,C:FUN_08051bc8;M:FUN_08037054,HIGH
+0x141,1,u8,CW decoder enable (also gates the Main-side decoder feed FUN_08037728),ui+0x9A5,C:FUN_08051bc8;M:FUN_08037728,HIGH
 0x154,4,f32,TX power W (drives PA DAC),ui+0x978,FUN_08041ef4/FUN_0803d3b0,VERIFIED
 0x158,1,u8,ack = last received 0x08 seq,ui+0xBCD,FUN_08049658/FUN_0804995c,VERIFIED
 0x159,1,u8,CW trainer (TX without RF switching; modes 4/5),ui+0x9A4,FUN_0803e338/FUN_08034b88,VERIFIED
