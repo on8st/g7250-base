@@ -8,8 +8,8 @@ offset,width,type,field,consumer,confidence
 0x03d,10,mixed,QO-100 offset fields (RF kHz 10489500; RX IF kHz 739500; IF MHz),FUN_0803d658,VERIFIED
 0x047,38,u8[],byte tables (per-band-looking defaults),various,LOW
 0x05c,6,u8[6],parameters sent in the FPGA config frame,FUN_08039238,MEDIUM
-0x068,1,u8,parameter,FUN_08034b88,LOW
-0x06a,1,u8,parameter,FUN_08034b88,LOW
+0x068,1,u8,FM deviation scale (default 4),FUN_08034b88,HIGH
+0x06a,1,u8,AM modulation depth % (default 25),FUN_08034b88,HIGH
 0x06d,1,u8,factory flag (cleared at load),FUN_0803d198,HIGH
 0x06e,4,u32,unknown,-,LOW
 0x072,220,struct[11],TX band edges {u64 start Hz; u64 end Hz; u32 enable},FUN_0803d198,VERIFIED

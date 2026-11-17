@@ -170,7 +170,8 @@ Roadmap mirrors `REVERSE_ENGINEERING_GUIDE.md`, tracked per unit.
       (see Done; `*/docs/flow.md`).
 - Phase 5 Inter-MCU protocol: tracked in its own section above.
 - [~] Phase 6 RX DSP pipeline: structure mapped (main_unit/docs/dsp.md).
-- [~] Phase 7 TX DSP pipeline: structure mapped (main_unit/docs/dsp.md).
+- [~] Phase 7 TX DSP pipeline: audio chain documented (dsp.md). Open: L-D Q-branch filtering;
+      absolute sideband sense vs the FPGA I/Q convention; settings 0x0B7; reader of 0x24005E60.
 - [~] DSP: AGC, NR engine (SpeexDSP) and FM discriminator documented
       (dsp.md); interrupt rate MEDIUM (48 kHz). Open: AGC code-to-label
       mapping (on-air check), DNR2 and DNR-type path, Speex vendor

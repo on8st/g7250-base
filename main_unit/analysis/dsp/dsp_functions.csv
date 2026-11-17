@@ -27,7 +27,7 @@ address,role,conf
 080318d0,AGC (look-ahead peak),VERIFIED
 0803b4c4,NR wrapper (48 to 16 kHz; Speex),HIGH
 08040238,speex_preprocess_run,HIGH
-08032cc4,TX compressor/clipper,MEDIUM
+08032cc4,TX soft clipper + post-LPF; copies I to Q,VERIFIED
 080362c0,CW keyer envelope,MEDIUM
 08032b44,CW sidetone,MEDIUM
 08079fe0,Hilbert FIR table 201 taps,VERIFIED
@@ -36,3 +36,31 @@ address,role,conf
 0803b228,NR init,HIGH
 08040cd8,speex_preprocess_ctl,HIGH
 08024aa8,atan2 f32 (CMSIS),HIGH
+08035b50,VOX detector (RMS dB vs threshold; hang),HIGH
+0804ec5c,wfview TX audio pull (int16 ring),HIGH
+08033328,set TX audio source hook,VERIFIED
+0803ab00,TX audio source code by mode group,HIGH
+0803a5ac,circular snapshot copy (I2S RX),HIGH
+08032a94,DSP filter init (TX FIR pair + design),HIGH
+080316b0,Butterworth LPF biquad design,HIGH
+080317b8,Butterworth HPF biquad design,HIGH
+08031660,filter design workspace init,MEDIUM
+08031fc8,design to biquad coefficient export,MEDIUM
+0803a660,NCO zone + LO factor (TX FIR scheme),MEDIUM
+0803a840,level taper 0 to -50 dB,HIGH
+0803a7cc,dB to linear (10^(x/10)),HIGH
+0803a7e4,20log10 approximation,HIGH
+0803a880,sine oscillator step (CTCSS),HIGH
+0803ac80,fast sqrt,HIGH
+0803a8e8,half-word swap for I2S word,HIGH
+0803aeb0,I2S RX DMA position,HIGH
+0803aecc,I2S TX DMA position,HIGH
+080245a8,abs f32 (CMSIS),HIGH
+08024630,add f32 (CMSIS),HIGH
+08024790,scale f32 (CMSIS),HIGH
+0802636c,RMS q31 (CMSIS),HIGH
+080263fc,float to q31 (CMSIS),HIGH
+08024e4c,sin f32 (CMSIS),HIGH
+08024dac,cos f32 (CMSIS),HIGH
+08079674,TX delay FIR table 201 taps,VERIFIED
+08079998,TX Hilbert FIR table 201 taps,VERIFIED

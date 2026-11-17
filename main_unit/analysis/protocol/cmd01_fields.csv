@@ -9,6 +9,8 @@ offset,width,type,field,control_source,main_consumer,confidence
 0x07b,1,u8,RF gain (DAC = 0x447 + 30*gain; max 0xFFF),ui+0x988 (float),FUN_08041ef4/FUN_0803ec3c,VERIFIED
 0x088,4,u32,sample rate / spectrum span index (0..3),ui+0x9B0,FUN_08041ef4/FUN_0804995c,HIGH
 0x08c,4,u32,span index for NFM/WFM; Main reads it but never copies it from 0x01 (keeps its init value 0),ui+0x9B1,FUN_08032020/FUN_08039078/FUN_08039238/FUN_0803e128 (value from FUN_0802239c),HIGH
+0x090,4,u32,TX audio source code voice modes (Main-only; init 1),-,FUN_0803ab00,HIGH
+0x094,4,u32,TX audio source code data modes (Main-only; init 2),-,FUN_0803ab00,HIGH
 0x098,1,u8,selected VFO (0=A 1=B),ui+0x923,FUN_08041ef4,VERIFIED
 0x09f,1,u8,antenna select (bit0 = ANT index; selects the ATU table block),ui+0xB9B,FUN_08044ea4/FUN_08041358,HIGH
 0x0a2,1,u8,RIT switch,ui+0x96E,FUN_08041ef4,VERIFIED
@@ -17,6 +19,8 @@ offset,width,type,field,control_source,main_consumer,confidence
 0x0ac,1,u8,ATU switch,ui+0x992,FUN_08041ef4/FUN_080412bc,VERIFIED
 0x0af,6,u8[6],transverter enable for band ids 0x22-0x27 (never written in V1.0.1),-,FUN_0803d658,VERIFIED
 0x0b9,1,u8,split VFO tracking (never written in V1.0.1),-,FUN_0803d658,VERIFIED
+0x0bc,4,f32,FM CTCSS tone Hz (never written),-,FUN_08034b88,VERIFIED
+0x0c0,4,f32,TX clipper pre-gain (10^(v/10); Control sends 1.0; Main ignores; default 1.0),-,FUN_08032cc4,VERIFIED
 0x0c4,2,i16,mic gain,ui+0x97C (float),FUN_08041ef4,VERIFIED
 0x0c8,2,u16,LINE IN gain 0..30 (Main never reads it; Control has no local use),ui+0xA10,-,VERIFIED
 0x0ca,2,u16,sidetone master level 0..100 (Main-only; init 85; not copied from 0x01),-,FUN_08032b44,HIGH
@@ -33,6 +37,7 @@ offset,width,type,field,control_source,main_consumer,confidence
 0x0e8,2,u16,FM HPF RX Hz (mode 8; 0 = 300),ui+0x9D8,FUN_08032020/FUN_0803d454,VERIFIED
 0x0ea,2,i16,VOX timeout,ui+0x9F0,FUN_08041ef4/FUN_08035b50,VERIFIED
 0x0ec,3,u8[3],filter order bytes CW / SSB-DIGI-WFM / AM-SAM-NFM (Main-only; loader defaults 10/15/3),-,FUN_08032020,MEDIUM
+0x0f1,1,u8,TX comb delay blocks (never written; 0 = off),-,FUN_08034b88,VERIFIED
 0x0f2,1,u8,DNR1 threshold,ui+0x972,FUN_08041ef4/FUN_0803b4c4,VERIFIED
 0x0f3,1,u8,DNR2 threshold,-,FUN_08041ef4,VERIFIED
 0x0f6,1,u8,Main-derived from active VFO byte +0x24,-,FUN_08041ef4,MEDIUM
@@ -41,10 +46,12 @@ offset,width,type,field,control_source,main_consumer,confidence
 0x100,1,u8,LINE OUT gain 0..30 low byte (Main never reads it; Control has no local use),ui+0xA12,-,VERIFIED
 0x102,5,i8[5],RX EQ bands 1-5 (active mode group),ui+0xA2A/0xA2F,FUN_08041ef4,VERIFIED
 0x107,5,i8[5],RX EQ bands 1-5 WFM set (never written by Control),-,FUN_08041ef4,VERIFIED
-0x10c,10,i8[10],further EQ bands (TX EQ?) (never written by Control),-,FUN_08041ef4/FUN_08034b88,HYPOTHESIS
+0x10c,5,i8[5],TX EQ bands 1-5 SSB/CW group (dB; 0 = bypass; never written by Control),-,FUN_08041ef4/FUN_08034b88,VERIFIED
+0x111,5,i8[5],TX EQ bands 1-5 AM/FM group (never written by Control),-,FUN_08041ef4/FUN_08034b88,VERIFIED
 0x117,1,i8,VOX threshold,ui+0x9F2,FUN_08041ef4/FUN_08035b50,VERIFIED
 0x11b,1,u8,NB switch,ui+0x973,FUN_08033610,VERIFIED
 0x11f,1,u8,VOX switch,ui+0x9ED,FUN_08041ef4/FUN_08035b50,VERIFIED
+0x120,1,u8,TX clipper switch (Main-only; default 1),-,FUN_08034b88,VERIFIED
 0x124,4,f32,CW DI/DA ratio (dash = dot x ratio),ui+0x9A0,FUN_080362c0,HIGH
 0x128,2,u16,CW tone / sidetone pitch Hz,ui+0x998,FUN_08032b44/FUN_08033610,HIGH
 0x12a,2,u16,QSK delay in 0.1 dot; Main stores ms = v*120/WPM (hang = ms+20),ui+0x99C,settings_apply/FUN_08023ab4,HIGH
@@ -68,7 +75,7 @@ offset,width,type,field,control_source,main_consumer,confidence
 0x15e,1,u8,PTT sources: b0 built-in PTT b1 CW key serial b5 need-tune b6 SWR/tune PTT b7 CI-V PTT (Control V1.0.1 sets only bits 5 6 7),ui+0x9C0,FUN_08041ef4,VERIFIED
 0x15f,1,u8,keySignals (never written by Control; Main ignores),ui+0x9C1,-,HIGH
 0x170,1,u8,speech compressor switch,ui+0x9EE,FUN_0804f1ec,VERIFIED
-0x171,1,u8,compressor ratio,ui+0x9EF,FUN_0804f1ec,VERIFIED
+0x171,1,u8,compressor ratio (mu = 2^(r+1); r >= 4 disables),ui+0x9EF,FUN_0804f1ec,VERIFIED
 0x174,4,u32,IPv4 address (MSB first),ui+0xB48,FUN_08041ef4/FUN_08048e20,VERIFIED
 0x178,4,u32,IPv4 gateway,ui+0xB4C,FUN_08041ef4,VERIFIED
 0x17c,4,u32,IPv4 netmask,ui+0xB50,FUN_08041ef4,VERIFIED

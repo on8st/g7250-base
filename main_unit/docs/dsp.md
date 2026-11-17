@@ -108,25 +108,88 @@ decay. Which side is mislabelled is a HYPOTHESIS to check on air.
 
 ## TX chain (`FUN_08034b88`)
 
-1. **Input.** One channel of the I²S3 receive stream (the mic or line
-   input), or the wfview TX audio.
-2. **Audio shaping.**
-   - five-band TX EQ;
-   - TX HPF/LPF biquads;
-   - DC blockers (one-pole);
-   - VOX and envelope tracking;
-   - compressor/soft clipper with a post-clip filter (MEDIUM).
-3. **Modulation per mode:**
-   - **SSB/RTTY:** phasing, with a second Hilbert/delay FIR pair;
-   - **CW:** keyer envelope, with the dot length from the WPM setting;
-   - **AM/SAM:** carrier × (1 + m·audio);
-   - **FM:** phase accumulation, then cos/sin.
-4. **Drive and ALC (MEDIUM).** A per-band drive gain selected from
-   frequency thresholds, a smoothed ramp-up and a fixed scale. The ALC
-   feedback loop is not yet pinned down.
-5. **Monitor and sidetone.** The TX monitor or the CW sidetone goes to
-   the I²S3 TX buffer.
-6. **Output.** A cache clean, then an MDMA copy into the FPGA TX ring.
+Status: audio/baseband stages VERIFIED unless noted. The power/drive
+stages after modulation (per-band scaling, soft-start ramp, TX-start
+mute, ALC) are out of scope here.
+
+**Block and rate (HIGH).** One run per new I²S half (half index
+`0x24000775` vs last processed `0x240094EC`), skipped when the codec TX
+DMA is too far into the half. 192 float samples per run, so the TX DSP
+runs at the codec rate of 48 kHz in 4 ms blocks. Two branches:
+I `0x2400A2FC` and Q `0x2400A5FC`.
+
+Stage order:
+1. **Snapshot.** `FUN_0803a5ac` copies the newest 192 stereo frames from
+   the circular I²S RX buffer (`0x30003760`) at the RX DMA position.
+2. **Source.**
+   - Tune carrier (TRX+0x22E): I = 1, Q = 0, all audio stages skipped.
+   - TX-audio mute flag `0x24013E4A` (T/R sequencing): both branches 0.
+   - LAN TX audio: hook `0x240096DC` (registered by the WFV-G init) →
+     `FUN_0804ec5c` pulls int16 samples (×2⁻¹⁵) from the wfview ring
+     while a session is streaming; zeros on underrun. The mic is then
+     ignored (no mixing).
+   - Otherwise the codec left ADC (the MICPGA mic input) ×2⁻³¹.
+   - The sample goes to both I and Q. Mic gain is analogue only
+     (codec MICPGA, `peripherals.md`); there is no USB or line source.
+3. **Voice gate.** `FUN_0803ab00` returns settings `0x094` for data
+   modes (1, 3, 10, 12) and `0x090` otherwise (Main-only; init 1 and 2).
+   EQ and comb run only for code 0 or 1, i.e. voice modes.
+4. **TX EQ (I only).** Five peaking biquads, skipped per band when the
+   gain byte is 0. Bands 300/700/1200/1800/2300 Hz with Q
+   0.5/0.7/1.0/1.5/2.0, gain = signed byte in dB (`FUN_08031cdc`).
+   Settings `0x10C`–`0x110` for SSB/CW/LBK and `0x111`–`0x115` for
+   AM/SAM/NFM/WFM. Control V1.0.1 never writes them, so the EQ is flat.
+5. **Comb (dormant).** Settings `0x0F1` = N gives ½·(x + x delayed by
+   N+1 blocks) from a 10-block ring (`0x24031E20`); nothing sets `0x0F1`.
+6. **DC blockers** on I and Q (`FUN_08031f7c`, pole 0.99951, ≈3.7 Hz).
+7. **TX HPF/LPF (I only).** Butterworth biquad cascades (`FUN_080317b8`
+   / `FUN_080316b0`) from VFO +0x12 / +0x16, each skipped when 0. The
+   order byte (`0x0EC`/`0x0ED`/`0x0EE`) is the section count (HPF capped
+   at 5), so the default SSB LPF is 30th order.
+8. **Compressor (I only).** All modes except AM/SAM and data. Peak
+   detector, instant attack, 20 ms release; gain law
+   ln(1 + μe) / (ln(1 + μ)·e) with μ = 2^(ratio + 1) (settings `0x171`;
+   ratio ≥ 4 turns it off); held below −60 dBFS; smoothed per block
+   (≈100 ms) and applied once per block. Switch `0x170`.
+9. **Modulation** (mode switch):
+   - **LSB, USB, U-D, RTTY:** soft clipper `FUN_08032cc4` first (pre-gain
+     10^(v/10), v = settings `0x0C0`, default 1.0; samples above −3 dBFS
+     divided by 2√2|s| − 1; TX LPF-shaped post-filter; then I is copied
+     to Q). Switch `0x120` defaults to 1 and Main never takes it from
+     Control, so the clipper is always on.
+   - **SSB phasing:** 201-tap FIRs (copies of the RX Hilbert/delay pair
+     at `0x08079998` / `0x08079674`). LSB/L-D: I = Hilbert, Q = delay;
+     USB/U-D/RTTY: swapped. Computed opposite-sideband rejection at
+     48 kHz: −46 dBc at 300 Hz, −53…−61 dBc from 1 to 20 kHz, −21 dBc
+     at 200 Hz.
+   - **L-D (MEDIUM, possible defect):** no clipper, so Q never receives
+     the DIGI LPF output; out-of-band audio is only about 6 dB down.
+   - **AM/SAM:** I = 0.5·(1 + m·x), Q = 0, m = calibration `0x06A`/100
+     (default 25 %).
+   - **NFM/WFM:** optional CTCSS 0.25·sin at settings `0x0BC` (dormant),
+     one-pole high-pass (0.95 pole, ≈390 Hz), phase step x·k with
+     k = calibration `0x068` × TX width / 48000 (default 4), then
+     I = sin, Q = cos. Peak deviation ≈ peak × `0x068` × width / 2π.
+   - **CW:** keyer envelope (see the CW docs). **LBK:** processed audio
+     goes to the monitor only. **IQ:** no modulation stage (MEDIUM).
+10. **TX scope (MEDIUM).** While transmitting and settings `0x0B7` = 0,
+    the modulated I/Q feed the 256-sample FFT ping-pong.
+11. **Monitor.** (I + Q) × taper(`0x0FF`/100) (0 to −50 dB, mute below
+    1 %) to both codec channels; the CW sidetone replaces it in CW.
+    The tap is after modulation, so in FM it is not plain audio.
+12. Hand-off to the drive/output path and the MDMA copy into the FPGA
+    TX ring.
+
+**VOX (`FUN_08035b50`, every 10 ms from the TIM6 arbiter) (HIGH).**
+RMS of the first I²S RX half (both channels, q31, ×2⁻³²) in dB against
+the signed threshold `0x117`. Immediate attack; hang = `0x0EA` ms, which
+also blocks VOX for that long after boot. Gated by `0x11F` and the
+radio-ready flag. No anti-VOX: no RX or speaker reference is read.
+
+**Why this needed the firmware:** the stage order, the I-only filtering,
+the compressor law and time constants, the clipper curve, the sideband
+I/Q mapping and which settings are live or dormant exist only in the
+code.
 
 ## Filter implementation
 
@@ -139,7 +202,8 @@ decay. Which side is mislabelled is a HYPOTHESIS to check on air.
   peaking design in `FUN_08031cdc`, and are recomputed when the mode or
   filter changes.
 - **Fixed tables.** Only the 201-tap SSB Hilbert and delay tables are
-  fixed in flash, at `0x08079FE0` and `0x08079CBC` (VERIFIED).
+  fixed in flash, at `0x08079FE0` and `0x08079CBC` (VERIFIED). The TX
+  path uses byte-identical copies at `0x08079998` and `0x08079674`.
 
 **Fixed SSB FIR pair (VERIFIED numerically).**
 - `0x08079FE0` holds a 201-tap antisymmetric FIR with every other tap
