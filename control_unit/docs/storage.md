@@ -25,6 +25,19 @@ EEPROM is not affected.
 | `memoChannelDire.ini` + `CHnnn.ini` | 1 | memory-channel directory and up to 100 channel files | boot | on save/erase |
 | `voice.ini` + `VOICE-nn.wav` | 0 | 10 voice memories | when the SD card mounts | after each recording |
 
+## SD bus timing (HIGH)
+
+The card is identified at 400 kHz on one data line (kernel clock PLL1Q
+96 MHz / 240). After init the HAL switches the card to 4-bit (ACMD6,
+done twice: once by HAL_SD_Init and once by the card-detect code) and
+writes ClockDiv 1 into CLKCR, so SDMMC_CK = 48 MHz. The HAL's 25 MHz
+guard for default-speed cards does not trigger, because 96 MHz / 50 MHz
+rounds down to 1. The firmware never sends the CMD6 high-speed switch or
+the CMD11 1.8 V switch, so the card runs at 48 MHz in default-speed
+mode at 3.3 V, above the 25 MHz the SD spec allows there. Most cards
+tolerate this; it is a candidate cause if certain cards fail to mount
+or write.
+
 ## config.ini
 
 **Layout.** The file has six sections:

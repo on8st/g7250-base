@@ -75,7 +75,8 @@ Roadmap mirrors `REVERSE_ENGINEERING_GUIDE.md`, tracked per unit.
 - [x] CH394 INT#: no interrupt register is read; HDSDR uses the flag plus a
       5 s poll, wfview ignores it; only RECV is enabled (peripherals.md SPI6).
 - [x] CH394 0x0039: WCH lists it as CHIPV (read-only); the documented soft reset is MODE bit 7,
-      never written. The 0x80 write has no documented effect (peripherals.md SPI6).
+      never written. The 0x80 write has no documented effect (peripherals.md SPI6). It lands
+      microseconds after RST# release at boot (inside the 12–19 ms window), 100 ms after on re-init.
 - [x] EEPROM layout: settings / calibration / NVPARAM marker / 2× ATU
       tables, CRC-8 0x31, 64-B pages (main_unit/docs/memory_map.md).
 - [x] Who writes the settings area (EEPROM 0x0000 / backup SRAM)? Nothing in either V1.0.1
@@ -139,7 +140,10 @@ Roadmap mirrors `REVERSE_ENGINEERING_GUIDE.md`, tracked per unit.
 - [x] wfview audio and scope packet layouts (network.md, wfview_packets.csv).
 - [~] wfview scope span: wfview sends and reads ± half-widths, the G7250 takes full width and reports
       half, so the axis is 2x too narrow (network.md). Confirm with a UDP capture.
-- [ ] wfview: value the radio returns on a 27 15 read; whether Xiegu ships a rig file for CI-V 0xA0.
+- [x] wfview: a 27 15 00 read returns the stored full width (civ_scope.csv); a bare 27 15 gets no reply.
+- [ ] wfview: whether Xiegu ships a rig file for CI-V 0xA0; which span read form wfview sends.
+- [ ] Control SD runs at 48 MHz in default-speed mode (storage.md); a re-implementation should cap
+      it at 25 MHz or switch the card to high speed.
 - [x] Control USART1 CI-V: endpoint is Bluetooth SPP (MEDIUM); both parsers see every byte (civ.md).
 
 ## Tooling

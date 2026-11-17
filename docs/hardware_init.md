@@ -106,7 +106,7 @@ These run in `main` after the table above (order and timing in
 | 15 | I2C1 | `FUN_08021414` (`FUN_080214f0`) | TIMINGR 0x00B03FDB (about 400 kHz), analog filter on; PCLK1; PB6/PB7 AF4 open-drain, very high speed; GT911, polled | none | VERIFIED | `peripherals.md` (GT911) |
 | 16 | I2C2 | `FUN_08021480` (`FUN_080214f0`) | TIMINGR 0x307075B1 (about 100 kHz); PH4/PH5 AF4 open-drain; AIC3204 + PCA9557 | none | VERIFIED | `peripherals.md` (I2C devices) |
 | 17 | RTC | `FUN_08022220` (`FUN_080222c0`) | LSE; prescalers 127/255 (1 Hz); time set only when backup register 0 lacks 0xA5A5 | none | VERIFIED | `peripherals.md` (RTC) |
-| 18 | SDMMC1 handle | `FUN_08022318` | 4-bit, rising edge, no power save, no flow control, ClockDiv 1; HAL_SD_Init runs later, on card detect | 49 (8) | VERIFIED (fields) | `storage.md` |
+| 18 | SDMMC1 handle | `FUN_08022318` | 4-bit, rising edge, no power save, no flow control, ClockDiv 1; HAL_SD_Init runs later, on card detect; after card init the clock is not capped (HAL rounding: 96/50 = 1), so SDMMC_CK = 48 MHz, 4-bit, default-speed mode (no CMD6, no 1.8 V switch); identification at 400 kHz, 1-bit | 49 (8) | VERIFIED (fields) | `storage.md` |
 | 19 | SPI1 | `FUN_080225d4` | master full-duplex, mode 0, /2 from PLL1Q (48 MHz); PB3–5 AF5, CS PG13; polled | none | VERIFIED | `peripherals.md` (SPI1) |
 | 20–25 | TIM2, TIM3, TIM4, TIM8, TIM13, TIM14 | `FUN_08022aa0` … `FUN_08022e78` | encoder, 100 Hz, 3.66 kHz PWM, 30 MHz input capture, 50 Hz, 1 kHz (timer clock 240 MHz) | 29 (10), 44 (1), 45 (11), 46 (10) | VERIFIED | `peripherals.md` (timers) |
 | 26 | USART1 | `FUN_08023234` (`FUN_08023344`) | 115 200 8N1; PA9/PA10 AF7; RX DMA1 S4 circular | none | VERIFIED | `peripherals.md` (USART1) |
