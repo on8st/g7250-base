@@ -144,6 +144,22 @@ scope data output, the superloop sends one waveform frame at most every
   back to its default Icom profile, which has no spectrum, and discards
   the scope frames. A copy of the IC-7300 rig file with address 0xA0
   avoids that.
+- **Scope reads (VERIFIED).** The `27` handler (`FUN_0804f77a`) answers
+  only 10, 11, 14, 15, 16 and 19. Every other `27` sub-command,
+  including speed (`1A`), hold (`17`) and single/dual (`13`), is echoed
+  back without a value. Full table: `analysis/protocol/civ_scope.csv`.
+- **Span read (VERIFIED).** Only `27 15 00` is answered; a bare `27 15`
+  gets no reply. The radio returns the stored value unchanged: 5 BCD
+  bytes, least significant first, followed by an extra 0x00 before FD.
+  That value is the last span a client set, or, after a connect sync,
+  the full I/Q rate of the current rate index (384, 192, 96 or 48 kHz).
+  It is the full width, not halved; only the frame header reports half.
+- **Scope mode (VERIFIED).** `27 14 00 FF` stores 0xFF and stops the
+  waveform stream; any other value stores 0 and starts it. Icom modes
+  01–03 therefore read back as 00.
+- **Reference level (VERIFIED arithmetic).** `27 19 00` takes 4 BCD
+  digits and a sign. The radio keeps the value divided by 10 and returns
+  it multiplied by 10, so the last digit is lost.
 - Unlike Icom radios over USB, the whole trace goes in a single
   division.
 

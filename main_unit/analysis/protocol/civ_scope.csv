@@ -1,0 +1,12 @@
+sub,read_form,read_reply_after_27xx,set_form,set_effect,store,confidence
+0x10,27 10,<0|1>,27 10 <v>,display = v!=0; log; echo,0x2402A248,VERIFIED
+0x11,27 11,<0|1>,27 11 <v>,wave flag = v!=0 if changed; log; echo,0x2402FA54,VERIFIED
+0x12,-,echo of request,-,echo only,-,VERIFIED
+0x13,-,echo of request,-,echo only,-,VERIFIED
+0x14,27 14 00,00 <mode>,27 14 00 <v>,v=FF: mode FF + wave off; else mode 00 + wave on; echo,0x2402A23C,VERIFIED
+0x15,27 15 <s>,<s> 5xBCD(LE) 00,27 15 <s> 5xBCD(LE),store Hz if changed; rate idx 3/2/1/0; FFT reload; echo,0x2402A240,VERIFIED
+0x16,27 16 or 27 16 00,00 <edge>,27 16 00 <v>,edge = v raw; echo,0x2402A244,VERIFIED
+0x17,-,echo of request,-,echo only,-,VERIFIED
+0x18,-,echo of request,-,echo only,-,VERIFIED
+0x19,27 19 00,00 BCDhi BCDlo <sign>,27 19 00 BCDhi BCDlo <sign>,ref = BCD4/10 signed; read = |ref|x10; echo,0x2402A246,VERIFIED
+other,-,echo of request,-,echo only,-,VERIFIED
