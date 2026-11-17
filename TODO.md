@@ -174,10 +174,10 @@ Roadmap mirrors `REVERSE_ENGINEERING_GUIDE.md`, tracked per unit.
 - [x] X6100 tooling leftovers: verify_tx_biquads.py and generate_analysis_markdown.py
       removed; evidence manifest and lib matcher ported; tools/filter_response.py added.
 - [x] run_headless_*.sh wrappers accept absolute output paths (decompile wrapper pending).
-- [ ] RenameVerifiedFromCsv.java aborts the whole CSV on one bad row (0x0804995c on a fresh import).
+- [x] RenameVerifiedFromCsv.java skips and logs bad rows (0x0804995c on a fresh import); wrapper fails on fatal errors.
 - [x] Full export runner (tools/run_full_export.sh) + doc checker (tools/check_docs.py) + CreateVectorFunctions.java.
 - [x] Confidence tags added (check_docs CONF 90 -> 3, the rest false positives); function ranges regenerated.
-- [ ] check_docs.py: accept wrapped status lines, "unless marked", and tags on bold lead-in lines.
+- [x] check_docs.py: accepts wrapped status lines, "unless marked", and tags on bold lead-in lines (tools/tests).
 - [x] Compare with X6100 and G90 findings where behavior overlaps (docs/related_radios.md).
 
 ## Round 2 — follow-up items (N01–N44)
