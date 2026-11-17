@@ -162,11 +162,18 @@ logs it as the chip version.
   documented software reset is bit 7 of MODE (`0x0000`, §7.1.1), which
   this driver never writes. The common register map is W5500-compatible;
   the CH394 adds CHIP_CONFIG at `0x003E` (IPv4/IPv6 select).
-- **Reading (HYPOTHESIS).** The write is most likely ineffective and the
-  reset comes from the RST# pulse. The 20 ms wait fits the manual's
-  12–19 ms delay between RSTB going high and the host being allowed to
-  access the chip (§10.4.3). An undocumented vendor function cannot be
-  excluded.
+- **Timing (HIGH).** Chip init raises PB5 with its very first
+  statement and sends the 0x0039 write right after, with no delay: it is
+  complete a few microseconds after RST# goes high. The read-back follows
+  HAL_Delay(20), so 20–21 ms later. At boot nothing else touches the
+  chip before this; PB5 has been low since GPIO init (more than 2 s).
+- **Reading (HIGH for timing, HYPOTHESIS for effect).** At boot the
+  write falls inside WCH's 12–19 ms no-access window after RSTB goes
+  high (§10.4.3), so the chip most likely ignores it. On the hard
+  re-init path (`FUN_08048d28`: RST# low 10 ms, high, then 100 ms) it
+  reaches a ready chip, where 0x0039 is the read-only CHIPV. Either way
+  the reset comes from the RST# pulse; only the 20 ms wait before the
+  version read respects the window.
 
 **Transfers.** Register writes are byte-by-byte SPI transmits.
 Single-register reads switch SPI6 to receive-only and poll it. Bulk
