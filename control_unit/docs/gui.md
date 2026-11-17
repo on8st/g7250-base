@@ -56,7 +56,7 @@ update) and 4 (calibrate) are issued. Coordinates are used unscaled
 **Licence note.** STemWin may be used only on STM32 parts under ST's
 licence; a re-implementation must bring its own copy or another library.
 
-The page functions are: main screen `FUN_0804e670`/`FUN_0804e8a8`; menus `FUN_0805c104`, `FUN_0805e168`, `FUN_080601c0`; system `FUN_08061fa4`; page refresher `FUN_080508d0`; applications `FUN_08052e3c`; keyer memory `FUN_080715dc`; voice `FUN_08077e38`. The navigation task is `FUN_08046cd8`; the status bar is drawn by `FUN_0804de38` (HIGH).
+The page functions are: main screen `FUN_0804e670`/`FUN_0804e8a8`; menus `FUN_0805c104`, `FUN_0805e168`, `FUN_080601c0`; system `FUN_08061fa4`; page refresher `FUN_080508d0`; applications `FUN_08052e3c`; keyer memory `FUN_080715dc`; voice `FUN_08077e38`. The navigation task is `FUN_08046cd8`; the status bar is drawn by `FUN_0804de38` (HIGH). Correction (MEDIUM): `FUN_0805c104`, `FUN_0805e168`, `FUN_080601c0`, `FUN_08061fa4` and `FUN_08052e3c` are the per-page item/label builders called from the page-class constructors, not drawing functions.
 
 ## Button and encoder map — VERIFIED unless noted
 

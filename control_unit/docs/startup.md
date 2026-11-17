@@ -81,7 +81,14 @@ corrected `ExportStartupEvidence.java`. `.preinit_array` is empty.
 `.init_array` = `0x080DD54C`–`0x080DD55C` and has 4 entries:
 frame_dummy (`0x080202c4`) and static initialisers at `0x0804aa50`,
 `0x08071948` and `0x080799d4`. The first fills UI/value tables (MEDIUM
-CONFIDENCE); the other two are not examined.
+CONFIDENCE). The other two touch no hardware (HIGH: no peripheral
+address and no HAL, emWin or FatFS call within four call levels).
+`0x08071948` constructs about 70 C++ GUI objects of the application's
+own widget and page classes in AXI SRAM; each gets a vtable, a short
+class tag, colours and zero geometry. Before that it fills
+label-descriptor tables (position as a fraction, text, colour, font).
+`0x080799d4` only fills more label tables. The page objects are rebuilt
+with real geometry at runtime by `FUN_0806d3c8`.
 
 ## Unknowns
 
